@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apply for Loan | Mkopo ChapChap</title>
+    <title>Apply for Loan | Tala Mkopo Hela</title>
 
     <!-- Favicons -->
     <link rel="apple-touch-icon" sizes="192x192" href="icons/icon.192.png">
@@ -646,8 +646,8 @@
         let selectedLoan = null;
         const applyButton = document.getElementById('apply-btn');
         const defaultApplyButtonHtml = applyButton.innerHTML;
-        const API_ENDPOINT = '/api/stk';
-        const VERIFY_ENDPOINT = '/api/verify?reference=';
+        const API_ENDPOINT = 'http://localhost:3000/api/stk'; // Update to your live domain
+        const VERIFY_ENDPOINT = 'http://localhost:3000/api/verify?reference='; // Update to your live domain
 
         function cleanPhone(phone) {
             phone = phone.replace(/\s+/g, "");
@@ -676,40 +676,22 @@
         async function makePayment(phoneNumber, amount, reference) {
             const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     phone_number: phoneNumber,
                     amount: amount,
-                    reference: reference,
-                    platform: "WJ404O"
+                    reference: reference
                 })
             });
-            if (!response.ok) throw new Error(`HTTP error: ${response.status}, ${await response.text()}`);
-            const data = await response.json();
-            console.log('STK Push Response:', data);
-
-            return (
-                data?.payhero_reference ||
-                data?.reference ||
-                data?.transaction_id ||
-                data?.data?.reference ||
-                data?.data?.payhero_reference ||
-                data?.merchant_reference ||
-                reference
-            );
+            if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+            return await response.json();
         }
 
         async function checkPaymentStatus(reference) {
-            const response = await fetch(`${VERIFY_ENDPOINT}${encodeURIComponent(reference)}`, {
-                method: 'GET',
-                headers: { 'Accept': 'application/json' },
-            });
-            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+            const response = await fetch(`${VERIFY_ENDPOINT}${encodeURIComponent(reference)}`);
+            if (!response.ok) throw new Error(`Error: ${response.statusText}`);
             const data = await response.json();
-            console.log('Verify Response:', data);
-
-            const status = (data?.status || data?.data?.status || '').toLowerCase();
-            return status;
+            return data.status;
         }
 
         function normalizePaymentStatus(status) {
@@ -815,7 +797,7 @@
                     }
 
                     if (statusResult.status === 'failed') {
-                        const error = new Error(statusResult.message || 'Payment was not completed');
+                        const error = new Error('Payment was not completed');
                         error.statusResult = statusResult;
                         throw error;
                     }
@@ -1047,7 +1029,7 @@
                             Swal.fire({
                                 title: 'Payment Failed',
                                 html: `
-                                    <p style="font-size: 0.9rem;">${error.message || 'Unable to process payment. Please try again.'}</p>
+                                    <p style="font-size: 0.9rem;">Unable to process payment. Please try again.</p>
                                     <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">
                                         Confirm your M-Pesa phone number is correct and try again.
                                     </p>
